@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーロール
+enum UserRole {
+  ADMIN   // 管理者
+  WORKER  // 作業員
+}
+
+// 作業種別
+enum WorkType {
+  EXCAVATION        // 掘削
+  CONCRETE_POURING  // コンクリート打設
+  REBAR_WORK        // 鉄筋工事
+  FORMWORK          // 型枠工事
+  FOUNDATION        // 基礎工事
+  PAVING            // 舗装
+  DRAINAGE          // 排水工事
+  SURVEYING         // 測量
+  SAFETY_CHECK      // 安全確認
+  CLEANUP           // 清掃・片付け
+  OTHER             // その他
+}
+
+// 休暇種別
+enum LeaveType {
+  PAID        // 有給休暇
+  UNPAID      // 無給休暇
+  SICK        // 病欠
+  SPECIAL     // 特別休暇
+  COMPENSATORY // 代休
+}
+
+// 休暇申請ステータス
+enum LeaveStatus {
+  PENDING   // 申請中
+  APPROVED  // 承認
+  REJECTED  // 却下
+  CANCELLED // キャンセル
+}
+
+// 通知タイプ
+enum NotificationType {
+  INFO      // お知らせ
+  WARNING   // 警告
+  ALERT     // アラート
+  REMINDER  // リマインダー
+}
+
+// ユーザー（作業員・管理者）
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(WORKER)
+  isActive  Boolean  @default(true)
+  avatarUrl String?  // プロフィール画像
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attendances   Attendance[]
+  workLogs      WorkLog[]
+  photos        Photo[]
+  leaves        Leave[]
+  notifications UserNotification[]
+
+  @@map("users")
+}
+
+// 現場
+model Site {
+  id        String    @id @default(uuid())
+  name      String    // 現場名
+  address   String    // 住所
+  latitude  Float     // 緯度
+  longitude Float     // 経度
+  radius    Float     @default(100) // 有効範囲（メートル）
+  startDate DateTime  // 工期開始日
+  endDate   DateTime? // 工期終了日
+  isActive  Boolean   @default(true)
+  imageUrl  String?   // 現場画像
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  attendances Attendance[]
+  photos      Photo[]
+
+  @@map("sites")
+}
+
+// 勤怠記録
+model Attendance {
+  id          String    @id @default(uuid())
+  userId      String
+  siteId      String
+  clockIn     DateTime  // 出勤時刻
+  clockOut    DateTime? // 退勤時刻
+  clockInLat  Float     // 出勤時の緯度
+  clockInLng  Float     // 出勤時の経度
+  clockOutLat Float?    // 退勤時の緯度
+  clockOutLng Float?    // 退勤時の経度
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site     Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  workLogs WorkLog[]
+  photos   Photo[]
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([clockIn])
+  @@map("attendances")
+}
+
+// 日報・作業記録
+model WorkLog {
+  id           String   @id @default(uuid())
+  attendanceId String
+  userId       String
+  workType     WorkType // 作業種別
+  description  String?  @db.Text // 作業詳細
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([attendanceId])
+  @@index([userId])
+  @@map("work_logs")
+}
+
+// 写真証跡
+model Photo {
+  id           String   @id @default(uuid())
+  userId       String
+  siteId       String?
+  attendanceId String?
+  url          String   // 画像URL
+  caption      String?  // キャプション
+  latitude     Float?   // 撮影位置 緯度
+  longitude    Float?   // 撮影位置 経度
+  takenAt      DateTime @default(now()) // 撮影日時
+  createdAt    DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site       Site?       @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  attendance Attendance? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([takenAt])
+  @@map("photos")
+}
+
+// 休暇申請
+model Leave {
+  id          String      @id @default(uuid())
+  userId      String
+  leaveType   LeaveType   // 休暇種別
+  startDate   DateTime    // 開始日
+  endDate     DateTime    // 終了日
+  reason      String?     @db.Text // 理由
+  status      LeaveStatus @default(PENDING)
+  approvedBy  String?     // 承認者ID
+  approvedAt  DateTime?   // 承認日時
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startDate])
+  @@index([status])
+  @@map("leaves")
+}
+
+// 通知・お知らせ
+model Notification {
+  id        String           @id @default(uuid())
+  title     String           // タイトル
+  content   String           @db.Text // 内容
+  type      NotificationType @default(INFO)
+  isGlobal  Boolean          @default(false) // 全体通知
+  expiresAt DateTime?        // 有効期限
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  recipients UserNotification[]
+
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ユーザー通知（既読管理）
+model UserNotification {
+  id             String   @id @default(uuid())
+  userId         String
+  notificationId String
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationId])
+  @@index([userId])
+  @@map("user_notifications")
+}
+
