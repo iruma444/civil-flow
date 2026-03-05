@@ -81,22 +81,6 @@ npx prisma db seed        # デモデータ投入（任意）
 npm run start:dev
 ```
 
-### Frontend
-
-```bash
-# 別ターミナルで
-cd frontend
-npm install
-npm run dev
-```
-
-| サービス | デフォルト URL |
-|----------|----------------|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:3001/api |
-
----
-
 ## Environment Variables
 
 `.env.example` を参考に `.env` を作成してください。
