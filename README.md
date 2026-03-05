@@ -1,6 +1,10 @@
 # Civil-Flow
 
-土木業界向け勤怠管理システム。GPS打刻・日報・現場管理・CSV出力に対応したフルスタックWebアプリケーション。
+## 接続用リンク
+
+- ログイン画面: https://civil-flow-tau.vercel.app/login
+- アプリTOP: https://civil-flow-tau.vercel.app/
+- GitHub Pages入口: https://iruma444.github.io/civil-flow/
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-10-red?style=flat-square&logo=nestjs)](https://nestjs.com/)
