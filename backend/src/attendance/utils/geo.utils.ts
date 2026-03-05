@@ -10,7 +10,7 @@ const EARTH_RADIUS_METERS = 6371000;
  * 度をラジアンに変換
  */
 function toRadians(degrees: number): number {
-    return (degrees * Math.PI) / 180;
+  return (degrees * Math.PI) / 180;
 }
 
 /**
@@ -21,25 +21,17 @@ function toRadians(degrees: number): number {
  * @param lng2 地点2の経度
  * @returns 2点間の距離（メートル）
  */
-export function calculateDistance(
-    lat1: number,
-    lng1: number,
-    lat2: number,
-    lng2: number,
-): number {
-    const dLat = toRadians(lat2 - lat1);
-    const dLng = toRadians(lng2 - lng1);
+export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
 
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return EARTH_RADIUS_METERS * c;
+  return EARTH_RADIUS_METERS * c;
 }
 
 /**
@@ -52,30 +44,30 @@ export function calculateDistance(
  * @returns 範囲内の場合true
  */
 export function isWithinRadius(
-    userLat: number,
-    userLng: number,
-    siteLat: number,
-    siteLng: number,
-    radiusMeters: number,
+  userLat: number,
+  userLng: number,
+  siteLat: number,
+  siteLng: number,
+  radiusMeters: number,
 ): boolean {
-    const distance = calculateDistance(userLat, userLng, siteLat, siteLng);
-    return distance <= radiusMeters;
+  const distance = calculateDistance(userLat, userLng, siteLat, siteLng);
+  return distance <= radiusMeters;
 }
 
 /**
  * デバッグ用：距離と範囲内かどうかの詳細情報を返す
  */
 export function getLocationValidationDetails(
-    userLat: number,
-    userLng: number,
-    siteLat: number,
-    siteLng: number,
-    radiusMeters: number,
+  userLat: number,
+  userLng: number,
+  siteLat: number,
+  siteLng: number,
+  radiusMeters: number,
 ): { distance: number; radius: number; isWithin: boolean } {
-    const distance = calculateDistance(userLat, userLng, siteLat, siteLng);
-    return {
-        distance: Math.round(distance),
-        radius: radiusMeters,
-        isWithin: distance <= radiusMeters,
-    };
+  const distance = calculateDistance(userLat, userLng, siteLat, siteLng);
+  return {
+    distance: Math.round(distance),
+    radius: radiusMeters,
+    isWithin: distance <= radiusMeters,
+  };
 }

@@ -26,7 +26,7 @@ const typeStyles: Record<string, { icon: string; color: string }> = {
 };
 
 export default function NotificationsPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const router = useRouter();
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
 
     const markAsRead = async (notificationId: string) => {
         try {
-            await api.put(`/notifications/${notificationId}/read`);
+            await api.put(`/notifications/${notificationId}/read`, {});
             setNotifications((prev) =>
                 prev.map((n) =>
                     n.notificationId === notificationId
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
 
     const markAllAsRead = async () => {
         try {
-            await api.put('/notifications/read-all');
+            await api.put('/notifications/read-all', {});
             setNotifications((prev) =>
                 prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
             );

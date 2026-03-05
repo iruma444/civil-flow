@@ -3,7 +3,7 @@ import { StatisticsController } from './statistics.controller';
 import { StatisticsService } from './statistics.service';
 
 @Module({
-    controllers: [StatisticsController],
-    providers: [StatisticsService],
+  controllers: [StatisticsController],
+  providers: [StatisticsService],
 })
-export class StatisticsModule { }
+export class StatisticsModule {}

@@ -30,7 +30,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function LeavesPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const router = useRouter();
     const [leaves, setLeaves] = useState<Leave[]>([]);

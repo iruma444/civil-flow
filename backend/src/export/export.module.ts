@@ -3,7 +3,7 @@ import { ExportController } from './export.controller';
 import { ExportService } from './export.service';
 
 @Module({
-    controllers: [ExportController],
-    providers: [ExportService],
+  controllers: [ExportController],
+  providers: [ExportService],
 })
-export class ExportModule { }
+export class ExportModule {}

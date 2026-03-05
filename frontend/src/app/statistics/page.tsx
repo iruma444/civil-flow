@@ -37,7 +37,7 @@ const workTypeLabels: Record<string, string> = {
 };
 
 export default function StatisticsPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const router = useRouter();
     const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);

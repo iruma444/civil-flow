@@ -1,124 +1,124 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async findAll() {
-        return this.prisma.user.findMany({
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+  async findAll() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('ユーザーが見つかりません');
     }
 
-    async findById(id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
+    return user;
+  }
 
-        if (!user) {
-            throw new NotFoundException('ユーザーが見つかりません');
-        }
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
 
-        return user;
+  async create(dto: CreateUserDto) {
+    const existingUser = await this.findByEmail(dto.email);
+    if (existingUser) {
+      throw new ConflictException('このメールアドレスは既に登録されています');
     }
 
-    async findByEmail(email: string) {
-        return this.prisma.user.findUnique({
-            where: { email },
-        });
-    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    async create(dto: CreateUserDto) {
-        const existingUser = await this.findByEmail(dto.email);
-        if (existingUser) {
-            throw new ConflictException('このメールアドレスは既に登録されています');
-        }
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        name: dto.name,
+        role: dto.role || 'WORKER',
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
+    return user;
+  }
 
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                password: hashedPassword,
-                name: dto.name,
-                role: dto.role || 'WORKER',
-            },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
+  async update(id: string, dto: UpdateUserDto) {
+    await this.findById(id);
 
-        return user;
-    }
+    return this.prisma.user.update({
+      where: { id },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
 
-    async update(id: string, dto: UpdateUserDto) {
-        await this.findById(id);
+  async delete(id: string) {
+    await this.findById(id);
 
-        return this.prisma.user.update({
-            where: { id },
-            data: dto,
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
-    }
+    await this.prisma.user.delete({
+      where: { id },
+    });
 
-    async delete(id: string) {
-        await this.findById(id);
+    return { message: 'ユーザーを削除しました' };
+  }
 
-        await this.prisma.user.delete({
-            where: { id },
-        });
-
-        return { message: 'ユーザーを削除しました' };
-    }
-
-    async getWorkers() {
-        return this.prisma.user.findMany({
-            where: {
-                role: 'WORKER',
-                isActive: true,
-            },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-            },
-            orderBy: { name: 'asc' },
-        });
-    }
+  async getWorkers() {
+    return this.prisma.user.findMany({
+      where: {
+        role: 'WORKER',
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
 }

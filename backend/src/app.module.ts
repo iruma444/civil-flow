@@ -14,24 +14,22 @@ import { ExportModule } from './export/export.module';
 import { HealthController } from './health.controller';
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-        }),
-        PrismaModule,
-        AuthModule,
-        UsersModule,
-        SitesModule,
-        AttendanceModule,
-        WorkLogsModule,
-        StatisticsModule,
-        LeavesModule,
-        NotificationsModule,
-        WeatherModule,
-        ExportModule,
-    ],
-    controllers: [HealthController],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    SitesModule,
+    AttendanceModule,
+    WorkLogsModule,
+    StatisticsModule,
+    LeavesModule,
+    NotificationsModule,
+    WeatherModule,
+    ExportModule,
+  ],
+  controllers: [HealthController],
 })
-export class AppModule { }
-
-
+export class AppModule {}

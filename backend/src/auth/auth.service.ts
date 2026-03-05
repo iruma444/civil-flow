@@ -2,95 +2,100 @@ import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto';
-import { JwtPayload } from './strategies/jwt.strategy';
+import { LoginDto, RegisterDto } from './auth.dto';
+import { JwtPayload } from './auth.strategy';
 
 export interface TokenResponse {
-    accessToken: string;
-    user: {
-        id: string;
-        email: string;
-        name: string;
-        role: string;
-    };
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  };
 }
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly jwtService: JwtService,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async register(dto: RegisterDto): Promise<TokenResponse> {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
+  async register(dto: RegisterDto): Promise<TokenResponse> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
-        if (existingUser) {
-            throw new ConflictException('このメールアドレスは既に登録されています');
-        }
-
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                password: hashedPassword,
-                name: dto.name,
-                role: dto.role || 'WORKER',
-            },
-        });
-
-        return this.generateToken(user);
+    if (existingUser) {
+      throw new ConflictException('このメールアドレスは既に登録されています');
     }
 
-    async login(dto: LoginDto): Promise<TokenResponse> {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-        if (!user || !user.isActive) {
-            throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
-        }
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        name: dto.name,
+        role: dto.role || 'WORKER',
+      },
+    });
 
-        const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    return this.generateToken(user);
+  }
 
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
-        }
+  async login(dto: LoginDto): Promise<TokenResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
-        return this.generateToken(user);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     }
 
-    async validateUser(userId: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-            select: { id: true, email: true, name: true, role: true, isActive: true },
-        });
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
-        if (!user || !user.isActive) {
-            throw new UnauthorizedException('認証に失敗しました');
-        }
-
-        return user;
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     }
 
-    private generateToken(user: { id: string; email: string; name: string; role: string }): TokenResponse {
-        const payload: JwtPayload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-        };
+    return this.generateToken(user);
+  }
 
-        return {
-            accessToken: this.jwtService.sign(payload),
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-            },
-        };
+  async validateUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('認証に失敗しました');
     }
+
+    return user;
+  }
+
+  private generateToken(user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+  }): TokenResponse {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
+  }
 }
